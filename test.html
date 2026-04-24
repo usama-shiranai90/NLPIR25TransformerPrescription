@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Metrics Comparison</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 p-4 lg:p-8">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { Check, X, Info } = lucide;
+
+        const models = [
+            { name: "COGNet", type: "Rec", jaccard: true, f1: true, prauc: true, pr: false, auc: false, ddi: true, text: false },
+            { name: "SIET", type: "Rec", jaccard: false, f1: false, prauc: false, pr: true, auc: false, ddi: true, text: false, note: "Uses NDCG@K, MAP@K" },
+            { name: "REFINE", type: "Rec", jaccard: true, f1: true, prauc: false, pr: false, auc: true, ddi: true, text: false, note: "Weighted DDI" },
+            { name: "Trans-GAHNet", type: "Rec", jaccard: true, f1: true, prauc: false, pr: true, auc: false, ddi: true, text: false },
+            { name: "LEADER", type: "Rec", jaccard: true, f1: true, prauc: true, pr: false, auc: false, ddi: false, text: false, note: "Semantic Safety" },
+            { name: "ACDNet", type: "Rec", jaccard: true, f1: true, prauc: true, pr: false, auc: false, ddi: true, text: false },
+            { name: "ARCI", type: "Rec", jaccard: true, f1: true, prauc: true, pr: false, auc: false, ddi: true, text: false },
+            { name: "CycleTrans", type: "Rec", jaccard: false, f1: false, prauc: false, pr: true, auc: false, ddi: true, text: false, note: "Precision only" },
+            { name: "RAREMed", type: "Rec", jaccard: true, f1: true, prauc: true, pr: false, auc: false, ddi: true, text: false },
+            { name: "TEMPT", type: "Rec", jaccard: true, f1: true, prauc: true, pr: false, auc: false, ddi: true, text: false },
+            { name: "LT3", type: "Gen", jaccard: false, f1: false, prauc: false, pr: false, auc: false, ddi: true, text: true, note: "BLEU, ROUGE-L" },
+            { name: "MEDIC", type: "Ver", jaccard: false, f1: false, prauc: false, pr: false, auc: false, ddi: false, text: false, note: "Near-miss Rate" },
+            { name: "CLM", type: "Ver", jaccard: false, f1: true, prauc: false, pr: true, auc: false, ddi: false, text: false },
+            { name: "RxStrategist", type: "Ver", jaccard: false, f1: true, prauc: false, pr: true, auc: false, ddi: false, text: false, note: "Expert Agreement" }
+        ];
+
+        const MetricIcon = ({ active }) => {
+            if (active) {
+                return <div className="flex justify-center"><Check className="text-green-600 w-6 h-6 stroke-[3]" /></div>;
+            }
+            return <div className="flex justify-center"><X className="text-slate-200 w-5 h-5 stroke-[2]" /></div>;
+        };
+
+        const App = () => {
+            return (
+                <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-900 text-white p-6 border-b border-slate-800">
+                        <h1 className="text-2xl font-bold">Evaluation Metrics Landscape</h1>
+                        <p className="text-slate-400 mt-1">Comparison of primary and safety metrics across Transformer-based medication models.</p>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    <th className="p-4 sticky left-0 bg-slate-50 z-10 w-48 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Model</th>
+                                    <th className="p-4 text-center w-24 bg-blue-50/50">Jaccard</th>
+                                    <th className="p-4 text-center w-24 bg-blue-50/50">F1-Score</th>
+                                    <th className="p-4 text-center w-24 bg-blue-50/50">PRAUC</th>
+                                    <th className="p-4 text-center w-24">Precision<br/>Recall</th>
+                                    <th className="p-4 text-center w-24">ROC<br/>AUC</th>
+                                    <th className="p-4 text-center w-24 bg-red-50/50 text-red-700">DDI Rate<br/>(Safety)</th>
+                                    <th className="p-4 text-center w-32">Text Gen<br/>(BLEU)</th>
+                                    <th className="p-4 text-left w-48 text-slate-400 font-normal normal-case">Specific / Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {models.map((model, idx) => (
+                                    <tr key={model.name} className={`hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                                        <td className="p-4 font-bold text-slate-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-slate-100">
+                                            {model.name}
+                                            <span className="block text-[10px] font-normal text-slate-400 mt-0.5">
+                                                {model.type === 'Rec' ? 'Recommendation' : model.type === 'Gen' ? 'Generation' : 'Verification'}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 bg-blue-50/20"><MetricIcon active={model.jaccard} /></td>
+                                        <td className="p-4 bg-blue-50/20"><MetricIcon active={model.f1} /></td>
+                                        <td className="p-4 bg-blue-50/20"><MetricIcon active={model.prauc} /></td>
+                                        <td className="p-4"><MetricIcon active={model.pr} /></td>
+                                        <td className="p-4"><MetricIcon active={model.auc} /></td>
+                                        <td className="p-4 bg-red-50/20"><MetricIcon active={model.ddi} /></td>
+                                        <td className="p-4"><MetricIcon active={model.text} /></td>
+                                        <td className="p-4 text-sm text-slate-500 italic border-l border-slate-100">
+                                            {model.note && (
+                                                <div className="flex items-center gap-2">
+                                                    <Info className="w-3 h-3 text-slate-400" />
+                                                    {model.note}
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="p-4 border-t border-slate-200 bg-slate-50 flex gap-6 text-xs text-slate-500">
+                        <div className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600" /> Metric Reported
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <X className="w-4 h-4 text-slate-300" /> Not Reported / Not Primary
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
